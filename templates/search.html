@@ -33,7 +33,7 @@ Posts
         {% for post in filter.qs %}
             <tr>
                 <td>
-                     <a href="{% url 'search_detail' post.id %}">{{ post.headline|title }}</a>
+                     <a href="{% url 'post_detail' post.id %}">{{ post.headline|title }}</a>
                     {{ post.headline|title|censor }}
                 </td>
                 <td>

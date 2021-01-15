@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User, AbstractUser
-
+from datetime import datetime, date
 
 
 # Create your models here.
@@ -44,9 +44,6 @@ class Category(models.Model):
         return f'{self.tag}'
 
 
-
-
-
 class Post(models.Model):
     article = 'Статья'
     news = 'Новость'
@@ -55,9 +52,9 @@ class Post(models.Model):
         (news, 'Новость')]
 
     author = models.ForeignKey(Author, on_delete=models.CASCADE, verbose_name = "Автор")
-    article_default_news = models.CharField(max_length = 7, choices = POSITIONS, default = news)
+    article_default_news = models.CharField(max_length = 7, choices = POSITIONS, default = news, verbose_name= 'Новость или статья')
     create_time = models.DateTimeField(auto_now_add = True, verbose_name= 'Дата создания')
-    categories = models.ManyToManyField(Category, through= 'PostCategory', null=True, blank=True, verbose_name= 'Тэг', related_name = 'categories')
+    categories = models.ManyToManyField(Category, through= 'PostCategory', verbose_name= 'Тэг', related_name = 'categories')
     headline = models.CharField(max_length = 255, verbose_name= 'Заголовок')
     text = models.TextField()
     rating_of_post = models.IntegerField(default=0)
@@ -78,8 +75,10 @@ class Post(models.Model):
     def preview(self):
         return self.text[:124] + '...'
 
+
+
     def __str__(self):
-        return f"Автор: {self.author.author.username}, вид работы: {self.article_default_news}, Заголовок: {self.headline}, оценка: {self.rating_of_post}"
+        return f"Автор: {self.author.author.username}, вид работы: {self.article_default_news}, Заголовок: {self.headline}, оценка: {self.rating_of_post}, категории: {self.categories.all()}"
 
 
 class PostCategory(models.Model):
@@ -122,3 +121,10 @@ class Comment(models.Model):
 #Category.objects.filter(subscribers= User.objects.get(username=str(user))).filter(tag = 'Спорт').id
 #Category.objects.all().get(pk=1)
 #Category.objects.get(pk=1).subscribers.remove(User.objects.get(username='admin'))
+#Author.objects.get(author= User.objects.get(username='admin'))
+#Author.objects.all()
+#Post.objects.get(pk=4).categories.all()
+#Category.objects.get(tag=tag).subscribers.all()
+#PostCategory.objects.all()
+#Post.objects.filter(categories__tag= 'Спорт')
+#Post.objects.filter(create_time__gt= datetime.fromtimestamp(datetime.timestamp(datetime.now()) - 604800), categories=tag).values('id')

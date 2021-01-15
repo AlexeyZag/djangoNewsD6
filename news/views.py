@@ -10,34 +10,10 @@ from .forms import PostForm, CategoryForm
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.decorators import login_required
-from django.core.mail import EmailMultiAlternatives
-class AppointmentView(View):
-    def get(self, request, *args, **kwargs):
-        return render(self.request, 'post.html', {})
+from django.core.mail import EmailMultiAlternatives, mail_admins, send_mail
 
-    def post(self, request, *args, **kwargs):
-        appointment = Post(
-        )
-        appointment.save()
 
-        html_content = render_to_string(
-            'appointment.html',
-            {
-                'post': appointment,
-            }
-        )
 
-        # в конструкторе уже знакомые нам параметры, да? Называются правда немного по другому, но суть та же.
-        msg = EmailMultiAlternatives(
-            subject=f'{appointment.headline}',
-            body=appointment.headline,  # это то же, что и message
-            from_email='zagaalexey@yandex.ru',
-            to=['alex8.8@mail.ru'],  # это то же, что и recipients_list
-        )
-        msg.attach_alternative(html_content, "text/html")  # добавляем html
-
-        msg.send()
-        return redirect('')
 
 class CategoryAdd(CreateView):
     template_name = 'subscribe.html'
@@ -49,7 +25,7 @@ class CategoryAdd(CreateView):
     def post(self, request, *args, **kwargs):
         user = self.request.user
         id = self.kwargs.get('pk')
-        Category.objects.get(pk=id).subscribers.add(User.objects.get(username=str(user)))
+        Category.objects.get(pk=id).subscribers.add(user)
         return redirect('/')
 class CategoryRemove(CreateView):
     template_name = 'unsubscribe.html'
@@ -61,7 +37,7 @@ class CategoryRemove(CreateView):
     def post(self, request, *args, **kwargs):
         user = self.request.user
         id = self.kwargs.get('pk')
-        Category.objects.get(pk=id).subscribers.remove(User.objects.get(username=str(user)))
+        Category.objects.get(pk=id).subscribers.remove(user)
         return redirect('/')
 class AddProtectedView(PermissionRequiredMixin, CreateView):
     template_name = 'add_article.html'
@@ -71,13 +47,75 @@ class AddProtectedView(PermissionRequiredMixin, CreateView):
     model = Post
     queryset = Post.objects.all()
 
+
     def form_valid(self, form):
         self.object = form.save(commit= False)
         author = self.request.user
-        id = Author.objects.get(author= User.objects.get(username = author)).id
+        id = Author.objects.get(author= User.objects.get(username = str(author))).id
         self.object.author_id = id
         self.object.save()
         return  super().form_valid(form)
+
+
+    """def post(self, request, *args, **kwargs):
+        f = PostForm(request.POST)
+        new_author = f.save(commit=False)
+        user = self.request.user
+        new_author.author = Author.objects.get(author=user)
+        post = f.save()
+        new_post_categories = post.categories.all()
+        list_of_users = []
+        for tag in new_post_categories:
+            for i in range(len(Category.objects.get(tag=tag).subscribers.all())):
+                list_of_users.append(Category.objects.get(tag=tag).subscribers.all()[i].email)
+        link_id = post.id
+        link = f'http://127.0.0.1:8000/news/{link_id}'
+
+        html_content = render_to_string(
+            '../templates/appointment.html',
+            {
+                'appointment': post, 'link': link
+            }
+        )
+        msg = EmailMultiAlternatives(
+            subject=f'{post.headline}',
+            body=f'{post.text}',
+            from_email='zagaalexey@yandex.ru',
+            to= list_of_users
+        )
+        msg.attach_alternative(html_content, "text/html")
+        msg.send()
+        return redirect('/')"""
+
+
+
+
+"""appointment = Post(
+            headline=request.POST['headline'],
+            text= request.POST['text'],
+        )
+        appointment.save()
+
+        # получем наш html
+        html_content = render_to_string(
+            'add_article.html',
+            {
+                'add_article': appointment,
+            }
+        )
+
+        # в конструкторе уже знакомые нам параметры, да? Называются правда немного по другому, но суть та же.
+        msg = EmailMultiAlternatives(
+            subject=f'{appointment.headline}',
+            body=appointment.text,  # это то же, что и message
+            from_email='zagaalexey@yandex.ru',
+            to=['alex8.8@mail.ru'],  # это то же, что и recipients_list
+        )
+        msg.attach_alternative(html_content, "text/html")  # добавляем html
+
+        msg.send()  # отсылаем
+
+        return redirect('add_article')"""
 
 class AuthorsList(ListView):
     model = Author
